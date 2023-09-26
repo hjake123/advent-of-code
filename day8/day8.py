@@ -1,8 +1,3 @@
-def safe_lookup(grid, i, j):
-    if i >= 0 and i < len(grid) and j >= 0 and j < len(grid[0]):
-        return grid[i][j]
-    return -1 # Note that -1 is truthy.
-
 with open("day8/in.txt") as file:
     # The actual grid of tree heights.
     grid = [[int(c) for c in lines if not c == '\n'] for lines in file]
