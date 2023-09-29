@@ -31,7 +31,6 @@ def CPU_cycle(count: int):
     Also samples the signal before running if count + 20 is a multiple of 40.
     '''
     global x
-    global sum
 
     if code_queue.pop() == ADD:
         x += code_queue.pop()
