@@ -1,3 +1,5 @@
+import heapq
+
 heightmap = []
 end = {"x": 0, "y": 0}
 
@@ -38,24 +40,35 @@ def nodes_overlap(a, b):
     '''
     return a['x'] == b['x'] and a['y'] == b['y']
 
-def iterpeek(iterable):
-    return len([iterable]) > 0
-
-def A_star(x, y):
+id = 0
+def push_to_heap(heap: heapq, item: dict):
     '''
-    Attempts to use A* to find the best path from (x, y).
+    Push a node onto the specified heap, with 'f' determining its sort.
+    '''
+    global id
+    tu = (item['f'], id, item)
+    heapq.heappush(heap, tu)
+    id += 1
+
+def pop_from_heap(heap: heapq):
+    '''
+    Pop a node from the specified heap.
+    '''
+    return heapq.heappop(heap)[2]
+
+def A_star(start):
+    '''
+    Attempts to use A* to find the best path.
     Parameter is the cost to this point, for use when recursing.
-    Returns the number of steps taken.
     '''
 
-    # Part 2: Try just adding everything to the open list. It's not great but like... maybe it'd still work?
-
-    open_list = [{'x': x, 'y': y, 'f': 0, 'g': 0}]
+    open_heap = []
+    push_to_heap(open_heap, start)
+    f_array = [[len(heightmap)*len(heightmap[0]) for _ in line] for line in heightmap]
     closed_array = [[False for _ in line] for line in heightmap]
 
-    while len(open_list) > 0:
-        open_list.sort(key = lambda d: d['f'], reverse=True)
-        node = open_list.pop()
+    while len(open_heap) > 0:
+        node = pop_from_heap(open_heap)
         successors = []
         if node['x'] + 1 < len(heightmap[0]):
             if heightmap[node['y']][node['x']] + 1 >= heightmap[node['y']][node['x'] + 1]:
@@ -84,24 +97,25 @@ def A_star(x, y):
         for s in successors:
             if nodes_overlap(s, end):
                 return s['f']
-
-            if any([nodes_overlap(e, s) and e['f'] <= s['f'] for e in open_list]):
+            if closed_array[s['y']][s['x']]:
                 continue
-            if closed_array[y][x]:
-                continue
-
             s['g'] = node['g'] + 1
             s['f'] = s['g'] + heuristic_distance(s['x'], s['y'])
-
-            open_list.append(s)
+            if s['f'] >= f_array[s['y']][s['x']]:
+                continue
+            f_array[s['y']][s['x']] = s['f']
+            push_to_heap(open_heap, s)
         closed_array[node['y']][node['x']] = True
     
-read_graph("day12/short.txt")
+read_graph("day12/in.txt")
+count = 1
 m = len(heightmap)*len(heightmap[0])
 for y in range(len(heightmap)):
     for x in range(len(heightmap[0])):
         if heightmap[y][x] == 0:
-            dist = A_star(x, y)
-            m = min(m, dist)
-            print(m)
+            dist = A_star({'x': x, 'y': y, 'f': 0, 'g': 0})
+            if not dist == None:
+                m = min(m, A_star({'x': x, 'y': y, 'f': 0, 'g': 0}))
+            print(m, count)
+            count += 1
 print(m)

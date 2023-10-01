@@ -1,3 +1,5 @@
+import heapq
+
 heightmap = []
 start = {"x": 0, "y": 0, "f": 0, "g": 0}
 end = {"x": 0, "y": 0}
@@ -41,18 +43,35 @@ def nodes_overlap(a, b):
     '''
     return a['x'] == b['x'] and a['y'] == b['y']
 
+id = 0
+def push_to_heap(heap: heapq, item: dict):
+    '''
+    Push a node onto the specified heap, with 'f' determining its sort.
+    '''
+    global id
+    tu = (item['f'], id, item)
+    heapq.heappush(heap, tu)
+    id += 1
+
+def pop_from_heap(heap: heapq):
+    '''
+    Pop a node from the specified heap.
+    '''
+    return heapq.heappop(heap)[2]
+
 def A_star():
     '''
     Attempts to use A* to find the best path.
     Parameter is the cost to this point, for use when recursing.
     '''
 
-    open_list = [start]
-    closed_list = []
+    open_heap = []
+    push_to_heap(open_heap, start)
+    f_array = [[len(heightmap)*len(heightmap[0]) for _ in line] for line in heightmap]
+    closed_array = [[False for _ in line] for line in heightmap]
 
-    while len(open_list) > 0:
-        open_list.sort(key = lambda d: d['f'], reverse=True)
-        node = open_list.pop()
+    while len(open_heap) > 0:
+        node = pop_from_heap(open_heap)
         successors = []
         if node['x'] + 1 < len(heightmap[0]):
             if heightmap[node['y']][node['x']] + 1 >= heightmap[node['y']][node['x'] + 1]:
@@ -82,15 +101,15 @@ def A_star():
             if nodes_overlap(s, end):
                 print(s)
                 return
+            if closed_array[s['y']][s['x']]:
+                continue
             s['g'] = node['g'] + 1
             s['f'] = s['g'] + heuristic_distance(s['x'], s['y'])
-            if not len([e for e in open_list if nodes_overlap(e, s) and e['f'] <= s['f']]) == 0:
+            if s['f'] >= f_array[s['y']][s['x']]:
                 continue
-            if not len([e for e in closed_list if nodes_overlap(e, s) and e['f'] <= s['f']]) == 0:
-                continue
-            open_list.append(s)
-        closed_list.append(node)
+            f_array[s['y']][s['x']] = s['f']
+            push_to_heap(open_heap, s)
+        closed_array[node['y']][node['x']] = True
     
 read_graph("day12/in.txt")
-print(heightmap)
 A_star()
