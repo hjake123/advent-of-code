@@ -24,9 +24,6 @@ def read_next_number(line: StringIO):
         i *= -1
     return i
 
-minx = -2147483648
-maxx = 2147483647
-
 def read_lists(filename):
     global minx
     global maxx
@@ -42,18 +39,15 @@ def read_lists(filename):
             by = read_next_number(ioline)
             beacon_list.append((bx, by))
 
-def check_cell(x: int, y: int) -> bool:
+def check_sensor_er(sensor: tuple, beacon: tuple, y: int) -> bool:
     '''
-    Determine whether a specific cell of the space is within the exclusion range of any sensor.
-    Runs with O(len(sensor_list)) time.
+    Return this sensor's exclusion range at height y to exclude_ranges.
+    Each range is in a tuple of form (lowest, highest) inclusive
     '''
-    
-    for i in range(len(sensor_list)):
-        dist = abs(sensor_list[i][0] - beacon_list[i][0]) + abs(sensor_list[i][1] - beacon_list[i][1])
-        
-        if abs(sensor_list[i][0] - x) + abs(sensor_list[i][1] - y) <= dist:
-            return True
-    return False
+    dist = abs(sensor[0] - beacon[0]) + abs(sensor[1] - beacon[1])
+    offset_from_y = abs(sensor[1] - y)
+    bounds = max(0, dist - offset_from_y)
+    return (sensor[0]-bounds, sensor[0]+bounds)
 
 def check_is_beacon(x: int, y: int) -> bool:
     '''
@@ -65,14 +59,9 @@ def check_is_beacon(x: int, y: int) -> bool:
     return False
         
 read_lists("day15/in.txt")
-print('min:', minx, 'max:', maxx, '-=- scanning', (maxx - minx), "cells with", len(sensor_list), "sensors")
 y_level = 2000000
-count = 0
-for i in range(minx, maxx+1):
-    if i % (int(maxx/100)+1) == 0:
-        print(i)
-    blocked = check_cell(i, y_level)
-    if blocked:
-        if not check_is_beacon(i, y_level):
-            count += 1
-print('ans:', count)
+all_span = (100000000000, -10000000000)
+for i in range(len(sensor_list)):
+    span = check_sensor_er(sensor_list[i], beacon_list[i], y_level)
+    all_span = (min(all_span[0], span[0]), max(all_span[1], span[1]))
+print(abs(all_span[1] - all_span[0]))
