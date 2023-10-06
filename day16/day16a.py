@@ -69,7 +69,7 @@ def read_graph(filename):
             valves.append(valve)
             if not score == 0:
                 nonzero_valves.append(valve)
-            if AA == None:
+            if valve.label == 'AA':
                 AA = valve
     
     i = 0
@@ -119,6 +119,6 @@ def score_state(current: ValveNode, past = [], minute = 0) -> int:
     return maximum
 
 # AND NOW, THE SCRIPT ITSELF--!
-read_graph('day16/short.txt')
+read_graph('day16/in.txt')
 max_potentials = [[max(0, (30-i) * v.score) for v in valves] for i in range(30)]
 print(score_state(AA))
