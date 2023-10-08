@@ -81,15 +81,15 @@ def read_graph(filename):
         i += 1
 
 memos = {}
-def get_state_key(current: ValveNode, past = [], minute = 0, you_delay = 0, ele_delay = 0):
+def get_state_key(current: ValveNode, past = [], minute = 0, cur_delay = 0):
     '''
     Return the unique state key for this state.
     '''
-    key = current.label + ';' + elephant.label + ":"
+    key = current.label + ':'
     for p in past:
         key += p.label + ','
-    key += str(minute) + "|" + str(you_delay) + "|" + str(ele_delay)
-    return key
+    key += str(minute)
+    return key + "|" + str(cur_delay)
 
 def score_state(you: ValveNode, elephant: ValveNode, past = [], minute = 4, you_delay = 0, ele_delay = 0) -> int:
     '''
@@ -106,35 +106,39 @@ def score_state(you: ValveNode, elephant: ValveNode, past = [], minute = 4, you_
         m = min(you_delay, ele_delay)
         return score_state(you, elephant, past, minute + m, you_delay - m, ele_delay - m)
 
-    if get_state_key(you, elephant, past, minute, you_delay, ele_delay) in memos:
-        return memos[get_state_key(you, elephant, past, minute, you_delay, ele_delay)]
-
     valves_left = [valve for valve in nonzero_valves if (valve not in past)]
 
-    maximum = 0
+    you_max = 0
+    ele_max = 0
 
     if you_delay <= 0:
-        for your_next in valves_left:
-            delay = you.distance(your_next) + 1
-            if minute + delay >= len(max_potentials):
-                continue
-            next_potential = max_potentials[minute + delay][your_next.index]
-            next_potential += score_state(your_next, elephant, past + [your_next], minute, delay, ele_delay)
-            if next_potential > maximum:
-                maximum = next_potential
+        if get_state_key(you, past, minute, you_delay) in memos:
+            you_max = memos[get_state_key(you, past, minute, you_delay)]
+        else:
+            for your_next in valves_left:
+                delay = you.distance(your_next) + 1
+                if minute + delay >= len(max_potentials):
+                    continue
+                next_potential = max_potentials[minute + delay][your_next.index]
+                next_potential += score_state(your_next, elephant, past + [your_next], minute, delay, ele_delay)
+                if next_potential > you_max:
+                    you_max = next_potential
+            memos.update({get_state_key(you, past, minute, you_delay): you_max})
     
     if ele_delay <= 0:
+        if get_state_key(elephant, past, minute, ele_delay) in memos:
+            ele_max = memos[get_state_key(elephant, past, minute, ele_delay)]
         for ele_next in valves_left:
             delay = elephant.distance(ele_next) + 1
             if minute + delay >= len(max_potentials):
                 continue
             next_potential = max_potentials[minute + delay][ele_next.index]
             next_potential += score_state(you, ele_next, past + [ele_next], minute, you_delay, delay)
-            if next_potential > maximum:
-                maximum = next_potential
+            if next_potential > ele_max:
+                ele_max = next_potential
+            memos.update({get_state_key(elephant, past, minute, ele_delay): ele_max})
 
-    memos.update({get_state_key(you, elephant, past, minute, you_delay, ele_delay): maximum})
-    return maximum
+    return max(you_max, ele_max)
 
 # AND NOW, THE SCRIPT ITSELF--!
 read_graph('day16/in.txt')
