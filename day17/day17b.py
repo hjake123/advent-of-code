@@ -182,7 +182,7 @@ with open(filename) as file:
 
 with open(filename) as file:
     top = -1
-    cycle_period = file_len
+    cycle_period = file_len/3
     snapshot_time = 0
     snapshot_height = 0
     snapshot_depths = []
@@ -200,6 +200,7 @@ with open(filename) as file:
                     print("Cycle found in", c_length, "drops.")
                     c_height = top - snapshot_height
                     print("Cycle adds", c_height, "height.")
+                    print("Cycle should repeat", int((big_number-snapshot_time)/c_length), "times.")
                     print("Estimating", int((big_number-snapshot_time)/c_length * c_height + snapshot_height), "total height.")
                     exit()
                 
